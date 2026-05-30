@@ -6,81 +6,387 @@
 //
 
 import SwiftUI
-import CoreData
+import UIKit
+
+private let encryptedMessageFooter = """
+Decrypt Messages Here
+https://www.iloveyou.rocks
+"""
 
 struct ContentView: View {
-    @Environment(\.managedObjectContext) private var viewContext
-
-    @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \Item.timestamp, ascending: true)],
-        animation: .default)
-    private var items: FetchedResults<Item>
+    @State private var selectedTab: AppTab = .encrypt
+    @State private var decryptInput = ""
+    @State private var savedMessages = SavedMessageStore.load()
 
     var body: some View {
-        NavigationView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp!, formatter: itemFormatter)")
-                    } label: {
-                        Text(item.timestamp!, formatter: itemFormatter)
+        TabView(selection: $selectedTab) {
+            EncryptView(onEncrypt: addSavedMessage)
+                .tabItem {
+                    Label("Encrypt", systemImage: "lock.fill")
+                }
+                .tag(AppTab.encrypt)
+
+            DecryptView(encryptedInput: $decryptInput)
+                .tabItem {
+                    Label("Decrypt", systemImage: "lock.open.fill")
+                }
+                .tag(AppTab.decrypt)
+
+            SavedMessagesView(
+                messages: savedMessages,
+                onDelete: deleteSavedMessage,
+                onUseForDecryption: useMessageForDecryption
+            )
+            .tabItem {
+                Label("Saved Messages", systemImage: "tray.full.fill")
+            }
+            .tag(AppTab.saved)
+        }
+    }
+
+    private func addSavedMessage(plaintext: String, encryptedText: String) {
+        let message = SavedCipherMessage(
+            plaintext: plaintext,
+            encryptedText: encryptedText,
+            createdAt: Date()
+        )
+
+        savedMessages.insert(message, at: 0)
+        SavedMessageStore.save(savedMessages)
+    }
+
+    private func deleteSavedMessage(_ message: SavedCipherMessage) {
+        savedMessages.removeAll { $0.id == message.id }
+        SavedMessageStore.save(savedMessages)
+    }
+
+    private func useMessageForDecryption(_ message: SavedCipherMessage) {
+        decryptInput = message.encryptedText
+        selectedTab = .decrypt
+    }
+}
+
+private enum AppTab {
+    case encrypt
+    case decrypt
+    case saved
+}
+
+private struct EncryptView: View {
+    let onEncrypt: (String, String) -> Void
+
+    @State private var plaintext = ""
+    @State private var encryptedText = ""
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    MessageInputCard(
+                        title: "Plaintext Message",
+                        prompt: "Enter up to 250 characters (letters, spaces, and new lines).",
+                        text: $plaintext,
+                        allowsCipherCharacters: false
+                    )
+
+                    Button("Encrypt Message", action: encryptMessage)
+                        .buttonStyle(PrimaryButtonStyle())
+                        .disabled(plaintext.isEmpty)
+
+                    if !encryptedText.isEmpty {
+                        CipherResultCard(
+                            title: "Encrypted Output",
+                            text: encryptedText
+                        )
+
+                        ShareLink(item: encryptedText) {
+                            Label("Share Encrypted Message", systemImage: "square.and.arrow.up")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(PrimaryButtonStyle())
                     }
                 }
-                .onDelete(perform: deleteItems)
+                .padding()
             }
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done", action: dismissKeyboard)
                 }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
+            }
+            .navigationTitle("Encrypt")
+        }
+    }
+
+    private func encryptMessage() {
+        let sanitizedPlaintext = LoveCipher.shared.sanitizePlaintext(plaintext)
+        plaintext = sanitizedPlaintext
+
+        guard let encryptedMessage = LoveCipher.shared.encrypt(sanitizedPlaintext) else {
+            encryptedText = ""
+            return
+        }
+
+        let encryptedMessageWithFooter = "\(encryptedMessage)\n\(encryptedMessageFooter)"
+        encryptedText = encryptedMessageWithFooter
+        onEncrypt(sanitizedPlaintext, encryptedMessageWithFooter)
+    }
+
+    private func dismissKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
+}
+
+private struct DecryptView: View {
+    @Binding var encryptedInput: String
+
+    @State private var plaintext = ""
+    @State private var errorMessage: String?
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    MessageInputCard(
+                        title: "Encrypted Message",
+                        prompt: "Paste the encrypted text generated by this app.",
+                        text: $encryptedInput,
+                        allowsCipherCharacters: true
+                    )
+
+                    Button("Paste from Clipboard", action: pasteFromClipboard)
+                        .buttonStyle(SecondaryButtonStyle())
+
+                    Button("Decrypt Message", action: decryptMessage)
+                        .buttonStyle(PrimaryButtonStyle())
+                        .disabled(encryptedInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+
+                    if let errorMessage {
+                        Text(errorMessage)
+                            .font(.footnote)
+                            .foregroundStyle(.red)
+                    }
+
+                    if !plaintext.isEmpty {
+                        CipherResultCard(
+                            title: "Plaintext Output",
+                            text: plaintext
+                        )
                     }
                 }
+                .padding()
             }
-            Text("Select an item")
+            .navigationTitle("Decrypt")
         }
     }
 
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(context: viewContext)
-            newItem.timestamp = Date()
-
-            do {
-                try viewContext.save()
-            } catch {
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
-            }
-        }
+    private func pasteFromClipboard() {
+        encryptedInput = UIPasteboard.general.string ?? ""
     }
 
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            offsets.map { items[$0] }.forEach(viewContext.delete)
+    private func decryptMessage() {
+        let normalizedLineEndings = encryptedInput.replacingOccurrences(of: "\r\n", with: "\n")
+            .replacingOccurrences(of: "\r", with: "\n")
 
-            do {
-                try viewContext.save()
-            } catch {
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
-            }
+        let footerStrippedInput = normalizedLineEndings.replacingOccurrences(
+            of: "\n\(encryptedMessageFooter)",
+            with: ""
+        )
+
+        let sanitizedCiphertext = LoveCipher.shared.sanitizeCiphertext(footerStrippedInput)
+
+        if let decryptedMessage = LoveCipher.shared.decrypt(sanitizedCiphertext) {
+            plaintext = decryptedMessage
+            errorMessage = nil
+        } else {
+            plaintext = ""
+            errorMessage = "The encrypted message format is invalid."
         }
     }
 }
 
-private let itemFormatter: DateFormatter = {
-    let formatter = DateFormatter()
-    formatter.dateStyle = .short
-    formatter.timeStyle = .medium
-    return formatter
-}()
+private struct SavedMessagesView: View {
+    let messages: [SavedCipherMessage]
+    let onDelete: (SavedCipherMessage) -> Void
+    let onUseForDecryption: (SavedCipherMessage) -> Void
 
-#Preview {
-    ContentView().environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
+    var body: some View {
+        NavigationStack {
+            Group {
+                if messages.isEmpty {
+                    ContentUnavailableView(
+                        "No Saved Messages",
+                        systemImage: "tray",
+                        description: Text("Encrypted messages you create will appear here.")
+                    )
+                } else {
+                    List {
+                        ForEach(messages) { message in
+                            SavedMessageRow(
+                                message: message,
+                                onDelete: { onDelete(message) },
+                                onUseForDecryption: { onUseForDecryption(message) }
+                            )
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                        }
+                    }
+                    .listStyle(.plain)
+                }
+            }
+            .navigationTitle("Saved Messages")
+        }
+    }
+}
+
+private struct MessageInputCard: View {
+    let title: String
+    let prompt: String
+    @Binding var text: String
+    let allowsCipherCharacters: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .font(.headline)
+
+            Text(prompt)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+            TextEditor(text: $text)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .frame(minHeight: 150, maxHeight: 220)
+                .scrollContentBackground(.hidden)
+                .padding(10)
+                .background(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .fill(Color(.secondarySystemBackground))
+                )
+                .onChange(of: text) { _, newValue in
+                    if allowsCipherCharacters {
+                        text = newValue
+                    } else {
+                        text = LoveCipher.shared.sanitizePlaintext(newValue)
+                    }
+                }
+
+            if !allowsCipherCharacters {
+                Text("\(text.count)/250 characters • letters, spaces, and new lines")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(18)
+        .background(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(Color(.systemBackground))
+                .shadow(color: .black.opacity(0.06), radius: 18, y: 8)
+        )
+    }
+}
+
+private struct CipherResultCard: View {
+    let title: String
+    let text: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .font(.headline)
+
+            ScrollView {
+                Text(text)
+                    .font(.system(.body, design: .monospaced))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .textSelection(.enabled)
+            }
+            .frame(maxHeight: 220)
+        }
+        .padding(18)
+        .background(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(Color(.secondarySystemBackground))
+        )
+    }
+}
+
+private struct SavedMessageRow: View {
+    let message: SavedCipherMessage
+    let onDelete: () -> Void
+    let onUseForDecryption: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(message.createdAt.formatted(date: .abbreviated, time: .shortened))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            Text(message.plaintext)
+                .font(.headline)
+
+            Text(message.encryptedText)
+                .font(.system(.footnote, design: .monospaced))
+                .foregroundStyle(.secondary)
+                .lineLimit(4)
+
+            HStack(spacing: 12) {
+                Button("Decrypt", action: onUseForDecryption)
+                    .buttonStyle(.borderedProminent)
+
+                Button("Copy") {
+                    UIPasteboard.general.string = message.encryptedText
+                }
+                .buttonStyle(.bordered)
+
+                Button("Delete", role: .destructive, action: onDelete)
+                    .buttonStyle(.bordered)
+            }
+        }
+        .padding(18)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(.secondarySystemBackground))
+        )
+    }
+}
+
+private struct PrimaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.headline)
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color.blue.opacity(configuration.isPressed ? 0.8 : 1))
+            )
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+    }
+}
+
+private struct SecondaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.headline)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color(.secondarySystemBackground))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(Color.blue.opacity(0.2), lineWidth: 1)
+            )
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+    }
+}
+
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
+    }
 }

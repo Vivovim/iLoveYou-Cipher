@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		E3744B672FC95A25005D32D5 /* iLoveYou.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iLoveYou.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E3744B672FC95A25005D32D5 /* ILoveYou Cipher.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ILoveYou Cipher.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -40,7 +40,7 @@
 		E3744B682FC95A25005D32D5 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				E3744B672FC95A25005D32D5 /* iLoveYou.app */,
+				E3744B672FC95A25005D32D5 /* ILoveYou Cipher.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -48,9 +48,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		E3744B662FC95A25005D32D5 /* iLoveYou */ = {
+		E3744B662FC95A25005D32D5 /* ILoveYou Cipher */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = E3744B772FC95A26005D32D5 /* Build configuration list for PBXNativeTarget "iLoveYou" */;
+			buildConfigurationList = E3744B772FC95A26005D32D5 /* Build configuration list for PBXNativeTarget "ILoveYou Cipher" */;
 			buildPhases = (
 				E3744B632FC95A25005D32D5 /* Sources */,
 				E3744B642FC95A25005D32D5 /* Frameworks */,
@@ -63,11 +63,11 @@
 			fileSystemSynchronizedGroups = (
 				E3744B692FC95A25005D32D5 /* iLoveYou */,
 			);
-			name = iLoveYou;
+			name = "ILoveYou Cipher";
 			packageProductDependencies = (
 			);
 			productName = iLoveYou;
-			productReference = E3744B672FC95A25005D32D5 /* iLoveYou.app */;
+			productReference = E3744B672FC95A25005D32D5 /* ILoveYou Cipher.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -85,7 +85,7 @@
 					};
 				};
 			};
-			buildConfigurationList = E3744B622FC95A24005D32D5 /* Build configuration list for PBXProject "iLoveYou" */;
+			buildConfigurationList = E3744B622FC95A24005D32D5 /* Build configuration list for PBXProject "ILoveYou Cipher" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -99,7 +99,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				E3744B662FC95A25005D32D5 /* iLoveYou */,
+				E3744B662FC95A25005D32D5 /* ILoveYou Cipher */,
 			);
 		};
 /* End PBXProject section */
@@ -252,10 +252,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = QZ94XJ42YA;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "ILoveYou Cipher";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -266,7 +268,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.christopherhuffaker.iLoveYou;
+				PRODUCT_BUNDLE_IDENTIFIER = com.christopherhuffaker.iloveyou;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -284,10 +286,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = QZ94XJ42YA;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "ILoveYou Cipher";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -298,7 +302,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.christopherhuffaker.iLoveYou;
+				PRODUCT_BUNDLE_IDENTIFIER = com.christopherhuffaker.iloveyou;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -313,7 +317,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		E3744B622FC95A24005D32D5 /* Build configuration list for PBXProject "iLoveYou" */ = {
+		E3744B622FC95A24005D32D5 /* Build configuration list for PBXProject "ILoveYou Cipher" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				E3744B752FC95A26005D32D5 /* Debug */,
@@ -322,7 +326,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		E3744B772FC95A26005D32D5 /* Build configuration list for PBXNativeTarget "iLoveYou" */ = {
+		E3744B772FC95A26005D32D5 /* Build configuration list for PBXNativeTarget "ILoveYou Cipher" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				E3744B782FC95A26005D32D5 /* Debug */,
